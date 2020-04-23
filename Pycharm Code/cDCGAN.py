@@ -6,27 +6,177 @@
 
 # Imported Libaries
 import tensorflow as tf
-import keras
 import numpy as np
-import sys
-
-# Import script to preprocess the data
-# noinspection PyUnresolvedReferences
-from Data_Preprocessing import preprocess_data
 
 
-# Importing dataset
-# Paths to individual folders containing images regarding classes
-malignant_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_FinalProject\Dataset\Malignant\\"
-benign_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_FinalProject\Dataset\Benign\\"
-normal_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_FinalProject\Dataset\Normal\\"
-paths = [malignant_folder_path, benign_folder_path, normal_folder_path]
+import matplotlib.pyplot as plt
+from IPython import display
+import os
 
 
-def main(argv=None):
-    X_train, X_test, y_train, y_test = preprocess_data(class_paths=paths)
-    print(X_train)
+from IPython import display
+# Keras Libaries
+import keras
+from keras import models, layers
+tf.keras.backend.clear_session()  # For easy reset of notebook state.
+
+
+def generator_model():
+    # Prepare noise input z
+    input_z = tf.keras.layers.Input(shape=(100,))
+    dense_z_1 = tf.keras.layers.Dense(1024 * 4 * 4)(input_z)
+    act_z_1 = tf.keras.layers.LeakyReLU(alpha=0.2)(dense_z_1)
+    bn_z_1 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_z_1)
+    reshape_z = tf.keras.layers.Reshape(target_shape=(4, 4, 1024), input_shape=(4 * 4 * 1024,))(bn_z_1)
+
+    # prepare conditional (label) input c
+    input_c = tf.keras.layers.Input(shape=(3,))
+    dense_c_1 = tf.keras.layers.Dense(4 * 4 * 1)(input_c)
+    act_c_1 = tf.keras.layers.LeakyReLU(alpha=0.2)(dense_c_1)
+    bn_c_1 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_c_1)
+    reshape_c = tf.keras.layers.Reshape(target_shape=(4, 4, 1), input_shape=(4 * 4 * 1,))(bn_c_1)
+
+    # concatenating noise z and label c
+    concat_z_c = tf.keras.layers.Concatenate()([reshape_z, reshape_c])
+
+    # Image generation
+    # Upsampling to 8x8
+    conv2D_1 = tf.keras.layers.Conv2DTranspose(filters=1024, kernel_size=(3, 3), strides=(2, 2), padding='same')(concat_z_c)
+    act_conv2D_1 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_1)
+    bn_conv2D_1 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_1)
+
+    # Upsampling to 16x16
+    conv2D_2 = tf.keras.layers.Conv2DTranspose(filters=512, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_1)
+    act_conv2D_2 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_2)
+    bn_conv2D_2 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_2)
+
+    # Upsampling to 32x32
+    conv2D_3 = tf.keras.layers.Conv2DTranspose(filters=256, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_2)
+    act_conv2D_3 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_3)
+    bn_conv2D_3 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_3)
+
+    # Upsampling to 64x64
+    conv2D_4 = tf.keras.layers.Conv2DTranspose(filters=128, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_3)
+    act_conv2D_4 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_4)
+    bn_conv2D_4 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_4)
+
+    # Upsampling to 128x128
+    conv2D_5 = tf.keras.layers.Conv2DTranspose(filters=64, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_4)
+    act_conv2D_5 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_5)
+    bn_conv2D_5 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_5)
+
+    # Upsampling to 256x256
+    conv2D_6 = tf.keras.layers.Conv2DTranspose(filters=32, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_5)
+    act_conv2D_6 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_6)
+    bn_conv2D_6 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_6)
+
+    # Upsampling to 512x512
+    conv2D_7 = tf.keras.layers.Conv2DTranspose(filters=16, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_6)
+    act_conv2D_7 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_7)
+    bn_conv2D_7 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_7)
+
+    # Upsampling to 1024x1024
+    conv2D_8 = tf.keras.layers.Conv2DTranspose(filters=8, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_7)
+    act_conv2D_8 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_8)
+    bn_conv2D_8 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_8)
+
+    # Output layer
+    conv2D_9 = tf.keras.layers.Conv2D(filters=3, kernel_size=(1, 1), strides=(1, 1), activation='tanh', padding='same')(bn_conv2D_8)
+
+    # Model output
+    model = tf.keras.models.Model(inputs=[input_z, input_c], outputs=conv2D_9)
+    return model
+
+def discriminator_model():
+    # prepare conditional (label) input c
+    input_c = tf.keras.layers.Input(shape=(3,))
+    dense_c_1 = tf.keras.layers.Dense(1024*1024*1)(input_c)
+    act_c_1 = tf.keras.layers.LeakyReLU(alpha=0.2)(dense_c_1)
+    bn_c_1 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_c_1)
+    reshape_c = tf.keras.layers.Reshape(target_shape=(1024, 1024, 1), input_shape=(1024*1024*1,))(bn_c_1)
+
+    # Get input images x: real p(x_r) or fake p(x_z)
+    input_x = tf.keras.layers.Input(shape=(1024, 1024, 3))
+
+    # Concatenate input c and image x
+    concat_x_c = tf.keras.layers.Concatenate()([input_x, reshape_c])
+
+    # Feature extraction for discriminating real from fake images
+    # Begin feature extraction process
+    # Downsampling: 16 feature maps
+    conv2d_1 = tf.keras.layers.Conv2D(16, (3, 3), strides=(2, 2), padding='same', name='conv_512x512')(concat_x_c)
+    act_conv2d_1 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_512x512')(conv2d_1)
+    dp_conv2d_1 = tf.keras.layers.Dropout(0.33, name='Dropout_512x512')(act_conv2d_1)
+
+    # Downsampling: 32 feature maps
+    conv2d_2 = tf.keras.layers.Conv2D(32, (3, 3), strides=(2, 2), padding='same', name='conv_256x256')(dp_conv2d_1)
+    act_conv2d_2 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_256x256')(conv2d_2)
+    dp_conv2d_2 = tf.keras.layers.Dropout(0.33, name='Dropout_256x256')(act_conv2d_2)
+
+    # Downsampling: 64 feature maps
+    conv2d_3 = tf.keras.layers.Conv2D(64, (3, 3), strides=(2, 2), padding='same', name='conv_128x128')(dp_conv2d_2)
+    act_conv2d_3 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_128x128')(conv2d_3)
+    dp_conv2d_3 = tf.keras.layers.Dropout(0.33, name='Dropout_128x128')(act_conv2d_3)
+
+    # Downsampling: 128 feature maps
+    conv2d_4 = tf.keras.layers.Conv2D(128, (3, 3), strides=(2, 2), padding='same', name='conv_64x64')(dp_conv2d_3)
+    act_conv2d_4 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_64x64')(conv2d_4)
+    dp_conv2d_4 = tf.keras.layers.Dropout(0.33, name='Dropout_64x64')(act_conv2d_4)
+
+    # Downsampling: 256 feature maps
+    conv2d_5 = tf.keras.layers.Conv2D(256, (3, 3), strides=(2, 2), padding='same', name='conv_32x32')(dp_conv2d_4)
+    act_conv2d_5 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_32x32')(conv2d_5)
+    dp_conv2d_5 = tf.keras.layers.Dropout(0.33, name='Dropout_32x32')(act_conv2d_5)
+
+    # Downsampling: 512 feature maps
+    conv2d_6 = tf.keras.layers.Conv2D(512, (3, 3), strides=(2, 2), padding='same', name='conv_16x16')(dp_conv2d_5)
+    act_conv2d_6 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_16x16')(conv2d_6)
+    dp_conv2d_6 = tf.keras.layers.Dropout(0.33, name='Dropout_16x16')(act_conv2d_6)
+
+    # Downsampling: 512 feature maps
+    conv2d_7 = tf.keras.layers.Conv2D(512, (3, 3), strides=(2, 2), padding='same', name='conv_8x8')(dp_conv2d_6)
+    act_conv2d_7 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_8x8')(conv2d_7)
+    dp_conv2d_7 = tf.keras.layers.Dropout(0.33, name='Dropout_8x8')(act_conv2d_7)
+
+    # Downsampling: 512 feature maps
+    conv2d_8 = tf.keras.layers.Conv2D(512, (3, 3), strides=(2, 2), padding='same', name='conv_4x4')(dp_conv2d_7)
+    act_conv2d_8 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_4x4')(conv2d_8)
+    dp_conv2d_8 = tf.keras.layers.Dropout(0.33, name='Dropout_4x4')(act_conv2d_8)
+
+    # Downsampling: 512 feature maps
+    conv2d_9 = tf.keras.layers.Conv2D(512, (4, 4), strides=(1, 1), padding='valid', name='conv_1x1')(dp_conv2d_8)
+    act_conv2d_9 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_1x1')(conv2d_9)
+    dp_conv2d_9 = tf.keras.layers.Dropout(0.33, name='Dropout_1x1')(act_conv2d_9)
+
+    flat_output = tf.keras.layers.Flatten()(dp_conv2d_9)
+    final_output = tf.keras.layers.Dense(units=1, activation='sigmoid', name='final_output')(flat_output)
+
+    model = tf.keras.models.Model(inputs=[input_c, input_x], outputs=final_output, name="Discriminator")
+    return model
+
+
+
+
+
+
+
+
+
+def main():
+    generator = generator_model()
+    generator.summary()
+    noise = tf.random.normal([1, 100])
+    label_in = tf.one_hot(indices=[0], depth=3)
+
+    generated_image = generator(inputs=[noise, label_in])
+    plt.imshow(generated_image[0, :, :, 0], cmap='gray')
+    plt.show()
+
+    discriminator = discriminator_model()
+    discriminator.summary()
+    decision = discriminator(inputs=[label_in, generated_image])
+    print("Decision: ", decision)
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
