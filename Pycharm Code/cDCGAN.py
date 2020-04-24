@@ -5,20 +5,76 @@
 # Date: 04/21/2020
 
 # Imported Libaries
+import sys
 import tensorflow as tf
 import numpy as np
-
-
+import time
 import matplotlib.pyplot as plt
-from IPython import display
 import os
 
+# Import script to preprocess the data
+# noinspection PyUnresolvedReferences
+# from Data_Preprocessing import preprocess_data
+# from cDCGAN import generator_model
+# from cDCGAN import discriminator_model
+from sklearn.model_selection import train_test_split
+import cv2  # Used in function 'load_datasets'
+import glob  # Used in function 'load_datasets'
 
-from IPython import display
-# Keras Libaries
-import keras
-from keras import models, layers
 tf.keras.backend.clear_session()  # For easy reset of notebook state.
+
+# Importing dataset
+# Paths to individual folders containing images regarding classes
+malignant_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_FinalProject\Dataset\Malignant\\"
+benign_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_FinalProject\Dataset\Benign\\"
+normal_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_FinalProject\Dataset\Normal\\"
+paths = [malignant_folder_path, benign_folder_path, normal_folder_path]
+
+
+# Functions used for preprocessing the real image dataset
+# load_datasets: load datasets from directory
+# create_X_y: generate a complete dataset with images X and respective labels y
+# preprocess_data: Split X and y into train and test and convert them into tensors type=float32
+def load_datasets(class_paths):
+    """
+    Loading and storing information real mammography images in arrays
+    Categories: normal, malignant, benign
+    :param class_paths: Array containing three file paths (normal, malignant, benign)
+    :return: three n*p (p=3) matrices containing information about the three different classes
+    """
+    datasets = []
+    for class_path in class_paths:
+        dataset = []
+        for image in glob.glob(class_path + "*.jpg"):
+            dataset.append(cv2.imread(image))
+        datasets.append(dataset)
+    return datasets[0], datasets[1], datasets[2]
+
+
+def create_X_y(malignant_data, benign_data, normal_data):
+    one_hot_encoding = [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
+    X = malignant_data + benign_data + normal_data
+    y = len(malignant_data) * [one_hot_encoding[0]] + len(benign_data) * [one_hot_encoding[1]] + len(normal_data) * [
+        one_hot_encoding[2]]
+    return X, y
+
+
+def preprocess_data(class_paths):
+    print("Loading Dataset...")
+
+    X_malignant, X_benign, X_normal = load_datasets(class_paths=class_paths)
+    X, y = create_X_y(X_malignant, X_benign, X_normal)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+    X_train = np.array(X_train) / 255
+    X_test = np.array(X_test) / 255
+
+    X_train = tf.convert_to_tensor(X_train, dtype=tf.float32)
+    X_test = tf.convert_to_tensor(X_test, dtype=tf.float32)
+    y_train = tf.convert_to_tensor(y_train, dtype=tf.float32)
+    y_test = tf.convert_to_tensor(y_test, dtype=tf.float32)
+    print("Finished loading!")
+
+    return X_train, X_test, y_train, y_test
 
 
 def generator_model():
@@ -41,59 +97,69 @@ def generator_model():
 
     # Image generation
     # Upsampling to 8x8
-    conv2D_1 = tf.keras.layers.Conv2DTranspose(filters=1024, kernel_size=(3, 3), strides=(2, 2), padding='same')(concat_z_c)
+    conv2D_1 = tf.keras.layers.Conv2DTranspose(filters=1024, kernel_size=(3, 3), strides=(2, 2), padding='same')(
+        concat_z_c)
     act_conv2D_1 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_1)
     bn_conv2D_1 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_1)
 
     # Upsampling to 16x16
-    conv2D_2 = tf.keras.layers.Conv2DTranspose(filters=512, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_1)
+    conv2D_2 = tf.keras.layers.Conv2DTranspose(filters=512, kernel_size=(3, 3), strides=(2, 2), padding='same')(
+        bn_conv2D_1)
     act_conv2D_2 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_2)
     bn_conv2D_2 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_2)
 
     # Upsampling to 32x32
-    conv2D_3 = tf.keras.layers.Conv2DTranspose(filters=256, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_2)
+    conv2D_3 = tf.keras.layers.Conv2DTranspose(filters=256, kernel_size=(3, 3), strides=(2, 2), padding='same')(
+        bn_conv2D_2)
     act_conv2D_3 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_3)
     bn_conv2D_3 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_3)
 
     # Upsampling to 64x64
-    conv2D_4 = tf.keras.layers.Conv2DTranspose(filters=128, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_3)
+    conv2D_4 = tf.keras.layers.Conv2DTranspose(filters=128, kernel_size=(3, 3), strides=(2, 2), padding='same')(
+        bn_conv2D_3)
     act_conv2D_4 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_4)
     bn_conv2D_4 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_4)
 
     # Upsampling to 128x128
-    conv2D_5 = tf.keras.layers.Conv2DTranspose(filters=64, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_4)
+    conv2D_5 = tf.keras.layers.Conv2DTranspose(filters=64, kernel_size=(3, 3), strides=(2, 2), padding='same')(
+        bn_conv2D_4)
     act_conv2D_5 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_5)
     bn_conv2D_5 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_5)
 
     # Upsampling to 256x256
-    conv2D_6 = tf.keras.layers.Conv2DTranspose(filters=32, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_5)
+    conv2D_6 = tf.keras.layers.Conv2DTranspose(filters=32, kernel_size=(3, 3), strides=(2, 2), padding='same')(
+        bn_conv2D_5)
     act_conv2D_6 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_6)
     bn_conv2D_6 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_6)
 
     # Upsampling to 512x512
-    conv2D_7 = tf.keras.layers.Conv2DTranspose(filters=16, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_6)
+    conv2D_7 = tf.keras.layers.Conv2DTranspose(filters=16, kernel_size=(3, 3), strides=(2, 2), padding='same')(
+        bn_conv2D_6)
     act_conv2D_7 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_7)
     bn_conv2D_7 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_7)
 
     # Upsampling to 1024x1024
-    conv2D_8 = tf.keras.layers.Conv2DTranspose(filters=8, kernel_size=(3, 3), strides=(2, 2), padding='same')(bn_conv2D_7)
+    conv2D_8 = tf.keras.layers.Conv2DTranspose(filters=8, kernel_size=(3, 3), strides=(2, 2), padding='same')(
+        bn_conv2D_7)
     act_conv2D_8 = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2D_8)
     bn_conv2D_8 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_conv2D_8)
 
     # Output layer
-    conv2D_9 = tf.keras.layers.Conv2D(filters=3, kernel_size=(1, 1), strides=(1, 1), activation='tanh', padding='same')(bn_conv2D_8)
+    conv2D_9 = tf.keras.layers.Conv2D(filters=3, kernel_size=(1, 1), strides=(1, 1), activation='tanh', padding='same')(
+        bn_conv2D_8)
 
     # Model output
     model = tf.keras.models.Model(inputs=[input_z, input_c], outputs=conv2D_9)
     return model
 
+
 def discriminator_model():
     # prepare conditional (label) input c
     input_c = tf.keras.layers.Input(shape=(3,))
-    dense_c_1 = tf.keras.layers.Dense(1024*1024*1)(input_c)
+    dense_c_1 = tf.keras.layers.Dense(1024 * 1024 * 1)(input_c)
     act_c_1 = tf.keras.layers.LeakyReLU(alpha=0.2)(dense_c_1)
     bn_c_1 = tf.keras.layers.BatchNormalization(momentum=0.9)(act_c_1)
-    reshape_c = tf.keras.layers.Reshape(target_shape=(1024, 1024, 1), input_shape=(1024*1024*1,))(bn_c_1)
+    reshape_c = tf.keras.layers.Reshape(target_shape=(1024, 1024, 1), input_shape=(1024 * 1024 * 1,))(bn_c_1)
 
     # Get input images x: real p(x_r) or fake p(x_z)
     input_x = tf.keras.layers.Input(shape=(1024, 1024, 3))
@@ -151,32 +217,156 @@ def discriminator_model():
     flat_output = tf.keras.layers.Flatten()(dp_conv2d_9)
     final_output = tf.keras.layers.Dense(units=1, activation='sigmoid', name='final_output')(flat_output)
 
-    model = tf.keras.models.Model(inputs=[input_c, input_x], outputs=final_output, name="Discriminator")
+    model = tf.keras.models.Model(inputs=[input_x, input_c], outputs=final_output, name="Discriminator")
     return model
 
 
+# Defining functions for loss of discriminator and generator
+def discriminator_loss(real_output, fake_output):
+    # This method returns a helper function to compute cross entropy loss
+    cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+    real_loss = cross_entropy(tf.ones_like(real_output), real_output)
+    fake_loss = cross_entropy(tf.zeros_like(fake_output), fake_output)
+    total_loss = real_loss + fake_loss
+    return total_loss
 
 
+def generator_loss(fake_output):
+    # This method returns a helper function to compute cross entropy loss
+    cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+    return cross_entropy(tf.ones_like(fake_output), fake_output)
 
 
+# Defining functions for training process:
+# training_step: controls process of each training step
+# train: controls training process through each epoch
+# Notice the use of `tf.function`
+# This annotation causes the function to be "compiled".
+@tf.function
+def training_step(generator_model, discriminator_model, gen_opt, disc_opt, batchsize, noise_z_dim, real_images,
+                  real_labels):
+    noise_z = tf.random.normal([batchsize, noise_z_dim])
+    # Fake labels
+    rnd_sample_labels = np.random.randint(0, 3, batchsize)
+    # generate one_hot_encoding
+    fake_labels = tf.one_hot(indices=rnd_sample_labels, depth=3, dtype=tf.float32)
+
+    gen_losses = []
+    disc_losses = []
+    with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+        fake_images = generator_model(inputs=[noise_z, fake_labels], training=True)
+        real_output = discriminator_model(inputs=[real_images, real_labels], training=True)
+        print("Real Output: ", real_output)
+        fake_output = discriminator_model(inputs=[fake_images, fake_labels], training=True)
+        print("Fake Output: ", fake_output)
+        gen_loss = generator_loss(fake_output=fake_output)
+        disc_loss = discriminator_loss(real_output=real_output, fake_output=fake_output)
+        gen_losses.append(gen_loss)
+        disc_losses.append(disc_loss)
+
+    gradients_of_generator = gen_tape.gradient(gen_loss, generator_model.trainable_variables)
+    gradients_of_discriminator = disc_tape.gradient(disc_loss, discriminator_model.trainable_variables)
+    gen_opt.apply_gradients(zip(gradients_of_generator, generator_model.trainable_variables))
+    disc_opt.apply_gradients(zip(gradients_of_discriminator, discriminator_model.trainable_variables))
+    return gen_losses, disc_losses
 
 
+def train(generator_model, discriminator_model, gen_opt, disc_opt, batchsize, noise_z_dim, real_data, epochs,
+          checkpoint):
+    global losses
+    seed = tf.random.normal([batchsize, noise_z_dim])
+    seed_ints = np.random.randint(0, 3, batchsize)
+    # generate one_hot_encoding
+    seed_labels = tf.one_hot(indices=seed_ints, depth=3, dtype=tf.float32)
 
-def main():
+    for epoch in range(epochs):
+        print("Epoch: ", epoch)
+        start = time.time()
+        i = 0
+        losses = []
+        for image_batch, label_batch in real_data:
+            i += 1
+            print("Training Step: ", i)
+            gen_losses, disc_losses = training_step(generator_model=generator_model,
+                                                    discriminator_model=discriminator_model,
+                                                    gen_opt=gen_opt,
+                                                    disc_opt=disc_opt,
+                                                    batchsize=batchsize,
+                                                    noise_z_dim=noise_z_dim,
+                                                    real_images=image_batch,
+                                                    real_labels=label_batch)
+            print("Generator Loss: {}; Discriminator Loss: {}".format(gen_losses, disc_losses))
+            losses.append((gen_losses, disc_losses))
+
+        checkpoint_dir = './training_checkpoints'
+        checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+        # Save the model every 15 epochs
+        if (epoch + 1) % 15 == 0:
+            checkpoint.save(file_prefix=checkpoint_prefix)
+
+        generate_and_save_images(generator_model,
+                                 epoch + 1,
+                                 seed,
+                                 seed_labels)
+
+        print('Time for epoch {} is {} sec'.format(epoch + 1, time.time() - start))
+    return losses
+
+
+# Function to generate and save images with new test data for trained model
+def generate_and_save_images(model, epoch, test_input, test_labels):
+    # Notice `training` is set to False.
+    # This is so all layers run in inference mode (batchnorm).
+    predictions = model(inputs=[test_input, test_labels], training=False)
+
+    fig = plt.figure(figsize=(4, 4))
+    for i in range(predictions.shape[0]):
+        plt.subplot(2, 5, i + 1)
+        plt.imshow(predictions[i, :, :, 0] * 255, cmap='gray')
+        plt.axis('off')
+
+    plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
+    # plt.show()
+
+
+def main(argv=None):
+    # Defining the generator and discriminator modeles
     generator = generator_model()
-    generator.summary()
-    noise = tf.random.normal([1, 100])
-    label_in = tf.one_hot(indices=[0], depth=3)
-
-    generated_image = generator(inputs=[noise, label_in])
-    plt.imshow(generated_image[0, :, :, 0], cmap='gray')
-    plt.show()
-
     discriminator = discriminator_model()
-    discriminator.summary()
-    decision = discriminator(inputs=[label_in, generated_image])
-    print("Decision: ", decision)
+
+
+    # Hyper-parameters for training process
+    EPOCHS = 5
+    Batch_size = 10  # argv[2]
+    noise_z_dim = 100
+
+    # Loading dataset with helper function
+    X_train, X_test, y_train, y_test = preprocess_data(class_paths=paths)
+
+    # Take training dataset (X_train and y_train) shuffle and generated batches
+    train_data = tf.data.Dataset.from_tensor_slices((X_train, y_train)).shuffle(len(X_train)).batch(Batch_size)
+
+    # optimizers
+    generator_optimizer = tf.keras.optimizers.Adam(0.01)
+    discriminator_optimizer = tf.keras.optimizers.Adam(0.01)
+
+    checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
+                                     discriminator_optimizer=discriminator_optimizer,
+                                     generator=generator,
+                                     discriminator=discriminator)
+
+    losses = train(generator_model=generator,
+                  discriminator_model=discriminator,
+                  gen_opt=generator_optimizer,
+                  disc_opt=discriminator_optimizer,
+                  batchsize=Batch_size,
+                  noise_z_dim=noise_z_dim,
+                  real_data=train_data,
+                  epochs=EPOCHS,
+                  checkpoint=checkpoint)
+
+    print(losses)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
