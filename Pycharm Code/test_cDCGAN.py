@@ -244,31 +244,36 @@ def generator_loss(fake_output):
 # This annotation causes the function to be "compiled".
 @tf.function
 def training_step(generator_model, discriminator_model, gen_opt, disc_opt, batchsize, noise_z_dim, real_images,
-                  real_labels):
+                  real_labels, number_training_step):
+
     noise_z = tf.random.normal([batchsize, noise_z_dim])
     # Fake labels
     rnd_sample_labels = np.random.randint(0, 3, batchsize)
     # generate one_hot_encoding
     fake_labels = tf.one_hot(indices=rnd_sample_labels, depth=3, dtype=tf.float32)
 
-    gen_losses = []
-    disc_losses = []
+
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-        fake_images = generator_model(inputs=[noise_z, fake_labels], training=True)
+        if number_training_step % 5 == 0:
+            print("Generating fake images")
+            fake_images = generator_model(inputs=[noise_z, fake_labels], training=True)
+        else:
+            fake_images = generator_model(inputs=[noise_z, fake_labels], training=False)
+        print("Discriminating real and fake images")
         real_output = discriminator_model(inputs=[real_images, real_labels], training=True)
-        print("Real Output: ", real_output)
         fake_output = discriminator_model(inputs=[fake_images, fake_labels], training=True)
-        print("Fake Output: ", fake_output)
         gen_loss = generator_loss(fake_output=fake_output)
         disc_loss = discriminator_loss(real_output=real_output, fake_output=fake_output)
-        gen_losses.append(gen_loss)
-        disc_losses.append(disc_loss)
+    tf.print(gen_loss)
+    tf.print(disc_loss)
 
+    print("Updating GEN")
     gradients_of_generator = gen_tape.gradient(gen_loss, generator_model.trainable_variables)
-    gradients_of_discriminator = disc_tape.gradient(disc_loss, discriminator_model.trainable_variables)
     gen_opt.apply_gradients(zip(gradients_of_generator, generator_model.trainable_variables))
+
+    print("Updating DISC")
+    gradients_of_discriminator = disc_tape.gradient(disc_loss, discriminator_model.trainable_variables)
     disc_opt.apply_gradients(zip(gradients_of_discriminator, discriminator_model.trainable_variables))
-    return gen_losses, disc_losses
 
 
 def train(generator_model, discriminator_model, gen_opt, disc_opt, batchsize, noise_z_dim, real_data, epochs,
@@ -282,21 +287,21 @@ def train(generator_model, discriminator_model, gen_opt, disc_opt, batchsize, no
     for epoch in range(epochs):
         print("Epoch: ", epoch)
         start = time.time()
-        i = 0
+        train_step = 1
         losses = []
         for image_batch, label_batch in real_data:
-            i += 1
-            print("Training Step: ", i)
-            gen_losses, disc_losses = training_step(generator_model=generator_model,
+            print("Training Step: ", train_step)
+            training_step(generator_model=generator_model,
                                                     discriminator_model=discriminator_model,
                                                     gen_opt=gen_opt,
                                                     disc_opt=disc_opt,
                                                     batchsize=batchsize,
                                                     noise_z_dim=noise_z_dim,
                                                     real_images=image_batch,
-                                                    real_labels=label_batch)
-            print("Generator Loss: {}; Discriminator Loss: {}".format(gen_losses, disc_losses))
-            losses.append((gen_losses, disc_losses))
+                                                    real_labels=label_batch,
+                                                    number_training_step=train_step)
+            train_step += 1
+
 
         checkpoint_dir = './training_checkpoints'
         checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
@@ -310,7 +315,6 @@ def train(generator_model, discriminator_model, gen_opt, disc_opt, batchsize, no
                                  seed_labels)
 
         print('Time for epoch {} is {} sec'.format(epoch + 1, time.time() - start))
-    return losses
 
 
 # Function to generate and save images with new test data for trained model
@@ -355,7 +359,7 @@ def main(argv=None):
                                      generator=generator,
                                      discriminator=discriminator)
 
-    losses = train(generator_model=generator,
+    train(generator_model=generator,
                   discriminator_model=discriminator,
                   gen_opt=generator_optimizer,
                   disc_opt=discriminator_optimizer,
