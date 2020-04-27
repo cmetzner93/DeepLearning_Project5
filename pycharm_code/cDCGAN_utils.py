@@ -15,3 +15,11 @@ def generate_and_save_images(model, epoch, test_input, test_labels):
 
     plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
     #plt.show()
+
+
+# Function store metrics in text file
+# add new line after each batch
+def save_diagnostics_to_file(name_of_file, diagnostics):
+    with open(name_of_file+'.txt', 'w') as f:
+        f.writelines("%s\n" % batch for epoch in diagnostics for batch in epoch)
+    f.close()

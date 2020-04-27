@@ -3,7 +3,7 @@ import numpy as np
 import time
 from cDCGAN_models import generator_model, discriminator_model, gan_model
 from cDCGAN_data_prep import preprocess_data
-from cDCGAN_utils import generate_and_save_images
+from cDCGAN_utils import generate_and_save_images, save_diagnostics_to_file
 
 # Load Mammography (images) dataset including their respective labels (one-hot-encoded)
 # Images are represented as greyscale using RGB-values
@@ -14,7 +14,7 @@ X_train, X_test, y_train, y_test = preprocess_data()
 buffer_size = len(X_train) + 1  # Shuffle training data, adding 1 enables uniform shuffle
 print(len(X_train))             # (every random permutation is equally likely to occur)
 batch_size = 20                 # Split training set (real images and respective labels) into batches
-EPOCHS = 50                     # Number of epochs of training
+EPOCHS = 500                    # Number of epochs of training
 dim_noise_z = 100               # Size of latent space (noise z) used to map fake mammography images
 
 # Use tf.data.Dataset.from_tensor_slices to shuffle data (uniformly) and create an tensor object which holds all
@@ -34,14 +34,13 @@ generator = generator_model()
 discriminator = discriminator_model()
 # print(discriminator.summary())
 discriminator.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-                      loss=tf.keras.losses.BinaryCrossentropy(from_logits=False))
+                      loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
+                      metrics=['acc'])
 gan = gan_model(g_model=generator, d_model=discriminator)
 
-
-
 # Code to keep track of training process
-accumulated_losses = []
-
+# Stores losses and accuracy
+diagnostic_info = []
 
 # Training the conditional DCGAN
 # Loop through number of epochs
@@ -59,6 +58,7 @@ for epoch in range(EPOCHS):
     # generate one_hot_encoding
     seed_labels = tf.one_hot(indices=seed_ints, depth=3, dtype=tf.float32)
 
+    diagnostics_per_epoch = []
 
     for image_batch, label_batch in train_data:
         print('Current training step: ', train_step)
@@ -85,8 +85,15 @@ for epoch in range(EPOCHS):
         print("Generator loss")
         gan_loss = gan.train_on_batch([noise_z, fake_labels], y_real)
 
+        # Storing batch metrics in list
+        time_stamp = time.time() - start
+        diagnostics_per_batch = [disc_real_loss, disc_fake_loss, gan_loss, time_stamp]
+        # appending batch metrics to epoch metrics
+        diagnostics_per_epoch.append(diagnostics_per_batch)
+
         train_step += 1
 
+        # Call function to generate random images with noise z and fake labels to check training evolution of the cDCGAN
         generate_and_save_images(generator,
                                  epoch + 1,
                                  seed,
@@ -95,6 +102,10 @@ for epoch in range(EPOCHS):
 
     print('Time for epoch {} is {} sec'.format(epoch + 1, time.time() - start))
     print()
+    diagnostic_info.append(diagnostics_per_epoch)
+
+# Calls function to write diagnostic information in text file
+save_diagnostics_to_file('cDCGAN_diagnostics', diagnostic_info)
 
 
 

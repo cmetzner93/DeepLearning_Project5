@@ -161,5 +161,5 @@ def gan_model(g_model, d_model):
     model = tf.keras.models.Model([gen_noise, gen_label], gan_output)
     # compile model
     opt = tf.keras.optimizers.Adam(lr=0.0002, beta_1=0.5)
-    model.compile(loss='binary_crossentropy', optimizer=opt)
+    model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
     return model
