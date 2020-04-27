@@ -1,12 +1,9 @@
 import tensorflow as tf
 import numpy as np
 import time
-import os
-import matplotlib.pyplot as plt
 from cDCGAN_models import generator_model, discriminator_model, gan_model
 from cDCGAN_data_prep import preprocess_data
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+from cDCGAN_utils import generate_and_save_images
 
 # Load Mammography (images) dataset including their respective labels (one-hot-encoded)
 # Images are represented as greyscale using RGB-values
@@ -31,35 +28,16 @@ for image_batch, label_batch in train_data.take(5):
     tf.print(label_batch)
 """
 
-
 # Define cDCGAN composites
 generator = generator_model()
 # print(generator.summary())
 discriminator = discriminator_model()
 # print(discriminator.summary())
-
-# Compiling generator and discriminator
-#generator.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-#                  loss=tf.keras.losses.BinaryCrossentropy(from_logits=False))
 discriminator.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
                       loss=tf.keras.losses.BinaryCrossentropy(from_logits=False))
-
 gan = gan_model(g_model=generator, d_model=discriminator)
 
-# Function to generate and save images with new test data for trained model
-def generate_and_save_images(model, epoch, test_input, test_labels):
-    # Notice `training` is set to False.
-    # This is so all layers run in inference mode (batchnorm).
-    predictions = model(inputs=[test_input, test_labels], training=False)
 
-    fig = plt.figure(figsize=(4, 5))
-    for i in range(predictions.shape[0]):
-        plt.subplot(4, 5, i + 1)
-        plt.imshow(predictions[i, :, :, 0] * 255, cmap='gray')
-        plt.axis('off')
-
-    plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
-    #plt.show()
 
 # Code to keep track of training process
 accumulated_losses = []
@@ -94,14 +72,17 @@ for epoch in range(EPOCHS):
         fake_labels = tf.one_hot(indices=fake_labels_as_int, depth=3, dtype=tf.float32)
 
         # Generating a set of fake images
-        fake_images = generator.predict([noise_z, fake_labels], verbose=1)
+        print("Generate fake images")
+        fake_images = generator.predict([noise_z, fake_labels], verbose=0)
 
         # generate labels to mark real images as real
+        print("Real and Fake loss")
         y_real = [1]*batch_size
         disc_real_loss = discriminator.train_on_batch([image_batch, label_batch], y_real)
         y_fake = [0]*batch_size
         disc_fake_loss = discriminator.train_on_batch([fake_images, fake_labels], y_fake)
 
+        print("Generator loss")
         gan_loss = gan.train_on_batch([noise_z, fake_labels], y_real)
 
         train_step += 1

@@ -1,6 +1,7 @@
 import tensorflow as tf
 
-
+# Architecture of generator and discriminator are loosely based on the proposed DCGAN from the Progressive Growing of
+# GANs https://research.nvidia.com/publication/2017-10_Progressive-Growing-of
 def generator_model():
     # Prepare noise input z
     input_z = tf.keras.layers.Input(shape=(100,))
@@ -146,6 +147,7 @@ def discriminator_model():
 
 
 # define the combined generator and discriminator model, for updating the generator
+# Source: https://machinelearningmastery.com/how-to-develop-a-conditional-generative-adversarial-network-from-scratch/
 def gan_model(g_model, d_model):
     # make weights in the discriminator not trainable
     d_model.trainable = False
