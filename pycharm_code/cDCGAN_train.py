@@ -14,7 +14,7 @@ X_train, X_test, y_train, y_test = preprocess_data()
 buffer_size = len(X_train) + 1  # Shuffle training data, adding 1 enables uniform shuffle
 print(len(X_train))             # (every random permutation is equally likely to occur)
 batch_size = 20                 # Split training set (real images and respective labels) into batches
-EPOCHS = 500                    # Number of epochs of training
+EPOCHS = 1                    # Number of epochs of training
 dim_noise_z = 100               # Size of latent space (noise z) used to map fake mammography images
 
 # Use tf.data.Dataset.from_tensor_slices to shuffle data (uniformly) and create an tensor object which holds all
@@ -104,8 +104,10 @@ for epoch in range(EPOCHS):
     print()
     diagnostic_info.append(diagnostics_per_epoch)
 
-# Calls function to write diagnostic information in text file
+# Calls function to write diagnostic information in text file in working directory
 save_diagnostics_to_file('cDCGAN_diagnostics', diagnostic_info)
 
-
-
+# Saving models for reproduction in working directory
+generator.save('cDCGAN_generator', save_format='h5')
+discriminator.save('cDCGAN_discriminator', save_format='h5')
+gan.save('cDCGAN_gan', save_format='h5')

@@ -1,15 +1,26 @@
 import numpy as np
 import tensorflow as tf
+from PIL import Image
 from sklearn.model_selection import train_test_split
 import cv2  # Used in function 'load_datasets'
 import glob  # Used in function 'load_datasets'
 
 # Importing dataset
 # Paths to individual folders containing images regarding classes
-malignant_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_FinalProject\Dataset\Malignant\\"
-benign_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_FinalProject\Dataset\Benign\\"
-normal_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_FinalProject\Dataset\Normal\\"
+malignant_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\malignant\\"
+benign_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\benign\\"
+normal_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\normal\\"
 paths = [malignant_folder_path, benign_folder_path, normal_folder_path]
+
+
+def resize_images(resized_width, resized_height, class_paths):
+    size = resized_width, resized_height
+    for folder_path in class_paths:
+        pgm_image_list = glob.glob(folder_path + '*.jpg')
+        for filename in pgm_image_list:
+            img = Image.open(filename)
+            img.thumbnail(size)
+            img.save(filename[:-4]+"_resize" + '.jpg')
 
 
 def load_datasets(class_paths):
@@ -22,7 +33,8 @@ def load_datasets(class_paths):
     datasets = []
     for class_path in class_paths:
         dataset = []
-        for image in glob.glob(class_path + "*.jpg"):
+        for image in glob.glob(class_path + "*_resize.jpg"):
+            print(len(image))
             dataset.append(cv2.imread(image))
         datasets.append(dataset)
     return datasets[0], datasets[1], datasets[2]
