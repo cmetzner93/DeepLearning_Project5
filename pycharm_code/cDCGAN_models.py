@@ -111,7 +111,7 @@ def discriminator_model():
     dp_conv2d_7 = tf.keras.layers.Dropout(0.5, name='Dropout_1x1')(act_conv2d_7)
 
     flat_output = tf.keras.layers.Flatten()(dp_conv2d_7)
-    final_output = tf.keras.layers.Dense(units=1, activation='sigmoid', name='final_output')(flat_output)
+    final_output = tf.keras.layers.Dense(units=1, activation='linear', name='final_output')(flat_output)
 
     model = tf.keras.models.Model(inputs=[input_x, input_c], outputs=final_output, name="Discriminator")
     return model
@@ -132,5 +132,5 @@ def gan_model(g_model, d_model):
     model = tf.keras.models.Model([gen_noise, gen_label], gan_output)
     # compile model
     opt = tf.keras.optimizers.Adam(lr=0.0002, beta_1=0.5)
-    model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
+    model.compile(loss=tf.keras.losses.BinaryCrossentropy(from_logits=True), optimizer=opt, metrics=['acc'])
     return model

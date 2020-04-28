@@ -14,7 +14,7 @@ X_train, X_test, y_train, y_test = preprocess_data()
 buffer_size = len(X_train) + 1  # Shuffle training data, adding 1 enables uniform shuffle
 print(len(X_train))             # (every random permutation is equally likely to occur)
 batch_size = 20                 # Split training set (real images and respective labels) into batches
-EPOCHS = 1                    # Number of epochs of training
+EPOCHS = 50                     # Number of epochs of training
 dim_noise_z = 100               # Size of latent space (noise z) used to map fake mammography images
 
 # Use tf.data.Dataset.from_tensor_slices to shuffle data (uniformly) and create an tensor object which holds all
@@ -34,7 +34,7 @@ generator = generator_model()
 discriminator = discriminator_model()
 # print(discriminator.summary())
 discriminator.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-                      loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
+                      loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
                       metrics=['acc'])
 gan = gan_model(g_model=generator, d_model=discriminator)
 

@@ -54,8 +54,8 @@ def preprocess_data():
     X_malignant, X_benign, X_normal = load_datasets(class_paths=paths)
     X, y = create_X_y(X_malignant, X_benign, X_normal)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.254658, random_state=42)
-    X_train = np.array(X_train) / 255
-    X_test = np.array(X_test) / 255
+    X_train = np.array(X_train - 127.5) / 127.5
+    X_test = np.array(X_test - 127.5) / 127.5
 
     X_train = tf.convert_to_tensor(X_train, dtype=tf.float32)
     X_test = tf.convert_to_tensor(X_test, dtype=tf.float32)
