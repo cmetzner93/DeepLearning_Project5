@@ -7,10 +7,16 @@ import glob  # Used in function 'load_datasets'
 
 # Importing dataset
 # Paths to individual folders containing images regarding classes
-malignant_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\malignant\\"
-benign_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\benign\\"
-normal_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\normal\\"
+malignant_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/malignant_resized/'
+benign_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/benign_resized/'
+normal_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/normal_resized/'
 paths = [malignant_folder_path, benign_folder_path, normal_folder_path]
+
+# Paths to individual folders containing images regarding classes
+#malignant_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\malignant\\"
+#benign_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\benign\\"
+#normal_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\normal\\"
+#paths = [malignant_folder_path, benign_folder_path, normal_folder_path]
 
 
 def resize_images(resized_width, resized_height, class_paths):
@@ -34,7 +40,6 @@ def load_datasets(class_paths):
     for class_path in class_paths:
         dataset = []
         for image in glob.glob(class_path + "*_resize.jpg"):
-            print(len(image))
             dataset.append(cv2.imread(image))
         datasets.append(dataset)
     return datasets[0], datasets[1], datasets[2]
