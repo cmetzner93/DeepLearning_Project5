@@ -14,7 +14,7 @@ X_train, X_test, y_train, y_test = preprocess_data()
 buffer_size = len(X_train) + 1  # Shuffle training data, adding 1 enables uniform shuffle
 print(len(X_train))             # (every random permutation is equally likely to occur)
 batch_size = 20                 # Split training set (real images and respective labels) into batches
-EPOCHS = 50                     # Number of epochs of training
+EPOCHS = 10                    # Number of epochs of training
 dim_noise_z = 100               # Size of latent space (noise z) used to map fake mammography images
 
 # Use tf.data.Dataset.from_tensor_slices to shuffle data (uniformly) and create an tensor object which holds all
@@ -34,9 +34,10 @@ generator = generator_model()
 discriminator = discriminator_model()
 # print(discriminator.summary())
 discriminator.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-                      loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+                      loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
                       metrics=['acc'])
 gan = gan_model(g_model=generator, d_model=discriminator)
+# tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
 # Code to keep track of training process
 # Stores losses and accuracy
@@ -73,17 +74,21 @@ for epoch in range(EPOCHS):
 
         # Generating a set of fake images
         print("Generate fake images")
-        fake_images = generator.predict([noise_z, fake_labels], verbose=0)
+        fake_images = generator.predict([noise_z, fake_labels])
 
         # generate labels to mark real images as real
         print("Real and Fake loss")
-        y_real = [1]*batch_size
+        #y_real = tf.random.uniform(shape=[batch_size], minval=0.7, maxval=1.2)
+        y_real = tf.ones([batch_size], dtype=tf.float32)
         disc_real_loss = discriminator.train_on_batch([image_batch, label_batch], y_real)
-        y_fake = [0]*batch_size
+        
+        #y_fake = tf.random.uniform(shape=[batch_size], minval=0, maxval=0.3)
+        y_fake = tf.zeros([batch_size], dtype=tf.float32)
         disc_fake_loss = discriminator.train_on_batch([fake_images, fake_labels], y_fake)
 
         print("Generator loss")
-        gan_loss = gan.train_on_batch([noise_z, fake_labels], y_real)
+        y_real_gen = tf.ones([batch_size], dtype=tf.float32)
+        gan_loss = gan.train_on_batch([noise_z, fake_labels], y_real_gen)
 
         # Storing batch metrics in list
         time_stamp = time.time() - start
