@@ -34,7 +34,7 @@ generator = generator_model()
 discriminator = discriminator_model()
 # print(discriminator.summary())
 discriminator.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-                      loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
+                      loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
                       metrics=['acc'])
 gan = gan_model(g_model=generator, d_model=discriminator)
 
