@@ -7,9 +7,9 @@ import glob  # Used in function 'load_datasets'
 
 # Importing dataset
 # Paths to individual folders containing images regarding classes
-malignant_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\malignant\\"
-benign_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\benign\\"
-normal_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\DeepLearning_Project5\dataset\normal\\"
+malignant_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\dataset\malignant\\"
+benign_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\dataset\benign\\"
+normal_folder_path = r"C:\Users\chris\Desktop\Studium\PhD\Courses\Spring 2020\COSC 525 - Deep Learning\dataset\normal\\"
 paths = [malignant_folder_path, benign_folder_path, normal_folder_path]
 
 
@@ -34,7 +34,6 @@ def load_datasets(class_paths):
     for class_path in class_paths:
         dataset = []
         for image in glob.glob(class_path + "*_resize.jpg"):
-            print(len(image))
             dataset.append(cv2.imread(image))
         datasets.append(dataset)
     return datasets[0], datasets[1], datasets[2]
@@ -52,10 +51,11 @@ def preprocess_data():
     print("Loading Dataset...")
 
     X_malignant, X_benign, X_normal = load_datasets(class_paths=paths)
+    print("Malignant {}, Benign {}, Normal {}".format(len(X_malignant), len(X_benign), len(X_normal)))
     X, y = create_X_y(X_malignant, X_benign, X_normal)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.254658, random_state=42)
-    X_train = np.array(X_train - 127.5) / 127.5
-    X_test = np.array(X_test - 127.5) / 127.5
+    X_train = (np.array(X_train) - 127.5) / 127.5
+    X_test = (np.array(X_test) - 127.5) / 127.5
 
     X_train = tf.convert_to_tensor(X_train, dtype=tf.float32)
     X_test = tf.convert_to_tensor(X_test, dtype=tf.float32)

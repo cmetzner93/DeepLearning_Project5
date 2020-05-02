@@ -120,7 +120,7 @@ def discriminator_model():
     final_output = tf.keras.layers.Dense(units=1, activation='linear', name='final_output')(flat_output)
     bn_final_output = tf.keras.layers.BatchNormalization(momentum=0.9)(final_output)
 
-    model = tf.keras.models.Model(inputs=[input_x, input_c], outputs=final_output, name="Discriminator")
+    model = tf.keras.models.Model(inputs=[input_x, input_c], outputs=bn_final_output, name="Discriminator")
     return model
 
 # define the combined generator and discriminator model, for updating the generator
@@ -138,6 +138,5 @@ def gan_model(g_model, d_model):
     model = tf.keras.models.Model([gen_noise, gen_label], gan_output)
     # compile model
     opt = tf.keras.optimizers.Adam(lr=0.001, beta_1=0.9)
-    #model.compile(loss=modified_generator_loss,optimizer=opt, metrics=['acc'])
-    model.compile(loss=tf.keras.losses.BinaryCrossentropy(from_logits=False), optimizer=opt, metrics=['acc'])
+    model.compile(loss=tf.keras.losses.BinaryCrossentropy(from_logits=True), optimizer=opt, metrics=['acc'])
     return model
