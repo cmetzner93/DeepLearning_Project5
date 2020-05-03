@@ -7,7 +7,13 @@ from cDCGAN_models import generator_model, discriminator_model, gan_model
 from cDCGAN_data_prep import preprocess_data
 from cDCGAN_utils import generate_and_save_images, save_diagnostics_to_file
 
-
+"""
+argv[0] script_name.py
+argv[1] number of epochs
+argv[2] batch size
+argv[3] optimizer used in discriminator: Stochastic Gradient Descent ("sgd") and Adam ("adam")
+argv[4] prefix you want to name all output files (losses, models, etc.)
+"""
 
 def main(argv=None):
     # Load Mammography (images) dataset including their respective labels (one-hot-encoded)
@@ -18,10 +24,10 @@ def main(argv=None):
     # Set Hyper-parameters for training the cDCGAN
     buffer_size = len(X_train) + 1  # Shuffle training data, adding 1 enables uniform shuffle
     print(len(X_train))             # (every random permutation is equally likely to occur)
-    EPOCHS = argv[2]                # Number of epochs of training)
-    batch_size = argv[3]            # Split training set (real images and respective labels) into batches
-    disc_optimizer = argv[4]        # Optimizer for discriminator: 'adam' or 'sgd'
-    name = argv[5]                  # Give output files (models, diagnostic text file with losses / accuracy) a name
+    EPOCHS = argv[1]                # Number of epochs of training)
+    batch_size = argv[2]            # Split training set (real images and respective labels) into batches
+    disc_optimizer = argv[3]        # Optimizer for discriminator: 'adam' or 'sgd'
+    name = argv[4]                  # Give output files (models, diagnostic text file with losses / accuracy) a name
     dim_noise_z = 100               # Size of latent space (noise z) used to map fake mammography images
 
     # Create target Directory if don't exist

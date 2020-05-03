@@ -1,12 +1,13 @@
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import os
-import sys
 
+
+# Functions to analyze the data
 def read_data_in_dict(filepath):
+    # File is expecting to have 7 columns
     # Open file with losses, accuracy, and timestamps
     f = open(filepath, "r")
-    # init dict with n lists; n = 7: disc_real_loss, disc_real_acc, disc_fake_loss, disc_fake_acc, gan_loss, gan_acc, time
     prime_dictionary = defaultdict(list)
     for line in f:
         line = line.strip().replace(',', '').replace("[", "").replace("]", "")
@@ -32,9 +33,18 @@ def read_data_in_dict(filepath):
                 if (index + 1) % 12 == 0:
                     adjusted_dict[key].append(float(element))
         #print(adjusted_dict[key])
+    # dict[key=0]: disc_real_loss
+    # dict[key=1]: disc_real_acc
+    # dict[key=2]: disc_fake_loss
+    # dict[key=3]: disc_fake_acc
+    # dict[key=4]: gan_loss
+    # dict[key=5]: gan_acc
+    # dict[key=6]: time
     return adjusted_dict
 
 
+# Function to plot the losses based on diagnostic files
+# Due to position of key in dictionary from function read_data_in_dict information is hardcoded
 def plot_losses(curr_dict, name):
     color = ['blue', 'orange', 'green']
     # Losses
@@ -56,6 +66,8 @@ def plot_losses(curr_dict, name):
     plt.close('all')
 
 
+# Function to plot the accuracies based on diagnostic files
+# Positions are hard coded
 def plot_acc(curr_dict, name):
     color = ['blue', 'orange', 'green']
     # Accuracies
@@ -73,16 +85,16 @@ def plot_acc(curr_dict, name):
     plt.close('all')
 
 
+# Main function which calls functions
+# read_data_in_dict, plot_losses, plot_acc
 def main():
+    # path to where the file is located
     path = os.path.join("C:", "\\Users", "chris", "Desktop", "tests")
-
-    for test in tests:
-        diagnostic_file = test + '_cDCGAN_diagnostics.txt'
-    
-        file_path = os.path.join(path, test, diagnostic_file)
-        current_dict = read_data_in_dict(filepath=file_path)
-        plot_losses(curr_dict=current_dict, name=path+'\\'+test)
-        plot_acc(curr_dict=current_dict, name=path+'\\'+test)
+    diagnostic_file = '_cDCGAN_diagnostics.txt'
+    file_path = os.path.join(path, test, diagnostic_file)
+    current_dict = read_data_in_dict(filepath=file_path)
+    plot_losses(curr_dict=current_dict, name=path+'\\'+test)
+    plot_acc(curr_dict=current_dict, name=path+'\\'+test)
 
 
 if __name__ == '__main__':

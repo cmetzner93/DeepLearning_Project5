@@ -1,7 +1,10 @@
 import tensorflow as tf
 
-# Architecture of generator and discriminator are loosely based on the proposed DCGAN from the Progressive Growing of
+
+# Architecture of generator and discriminator were inspired by the proposed DCGAN from the Progressive Growing of
 # GANs https://research.nvidia.com/publication/2017-10_Progressive-Growing-of
+# Model were build based on tensorflows Keras functional API
+# https://www.tensorflow.org/guide/keras/functional
 def generator_model():
     # Prepare noise input z
     input_z = tf.keras.layers.Input(shape=(100,))
@@ -59,6 +62,7 @@ def generator_model():
     model = tf.keras.models.Model(inputs=[input_z, input_c], outputs=conv2D_6)
     return model
 
+
 def discriminator_model():
     # prepare conditional (label) input c
     input_c = tf.keras.layers.Input(shape=(3,))
@@ -76,52 +80,53 @@ def discriminator_model():
     # Begin feature extraction process
     # Downsampling: 16 feature maps
     conv2d_1 = tf.keras.layers.Conv2D(16, (3, 3), strides=(2, 2), padding='same', name='conv_512x512')(concat_x_c)
-    bn_conv2d_1 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_1)
-    act_conv2d_1 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_512x512')(bn_conv2d_1)
+    #bn_conv2d_1 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_1)
+    act_conv2d_1 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_512x512')(conv2d_1)
     dp_conv2d_1 = tf.keras.layers.Dropout(0.5, name='Dropout_512x512')(act_conv2d_1)
 
     # Downsampling: 32 feature maps
     conv2d_2 = tf.keras.layers.Conv2D(32, (3, 3), strides=(2, 2), padding='same', name='conv_256x256')(dp_conv2d_1)
-    bn_conv2d_2 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_2)
-    act_conv2d_2 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_256x256')(bn_conv2d_2)
+    #bn_conv2d_2 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_2)
+    act_conv2d_2 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_256x256')(conv2d_2)
     dp_conv2d_2 = tf.keras.layers.Dropout(0.5, name='Dropout_256x256')(act_conv2d_2)
 
     # Downsampling: 64 feature maps
     conv2d_3 = tf.keras.layers.Conv2D(64, (3, 3), strides=(2, 2), padding='same', name='conv_128x128')(dp_conv2d_2)
-    bn_conv2d_3 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_3)
-    act_conv2d_3 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_128x128')(bn_conv2d_3)
+    #bn_conv2d_3 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_3)
+    act_conv2d_3 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_128x128')(conv2d_3)
     dp_conv2d_3 = tf.keras.layers.Dropout(0.5, name='Dropout_128x128')(act_conv2d_3)
 
     # Downsampling: 128 feature maps
     conv2d_4 = tf.keras.layers.Conv2D(128, (3, 3), strides=(2, 2), padding='same', name='conv_64x64')(dp_conv2d_3)
-    bn_conv2d_4 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_4)
-    act_conv2d_4 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_64x64')(bn_conv2d_4)
+    #bn_conv2d_4 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_4)
+    act_conv2d_4 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_64x64')(conv2d_4)
     dp_conv2d_4 = tf.keras.layers.Dropout(0.5, name='Dropout_64x64')(act_conv2d_4)
 
     # Downsampling: 256 feature maps
     conv2d_5 = tf.keras.layers.Conv2D(256, (3, 3), strides=(2, 2), padding='same', name='conv_32x32')(dp_conv2d_4)
-    bn_conv2d_5 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_5)
-    act_conv2d_5 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_32x32')(bn_conv2d_5)
+    #bn_conv2d_5 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_5)
+    act_conv2d_5 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_32x32')(conv2d_5)
     dp_conv2d_5 = tf.keras.layers.Dropout(0.5, name='Dropout_32x32')(act_conv2d_5)
 
     # Downsampling: 256 feature maps
     conv2d_6 = tf.keras.layers.Conv2D(256, (5, 5), strides=(1, 1), padding='valid', name='conv_4x4')(dp_conv2d_5)
-    bn_conv2d_6 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_6)
-    act_conv2d_6 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_4x4')(bn_conv2d_6)
+    #bn_conv2d_6 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_6)
+    act_conv2d_6 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_4x4')(conv2d_6)
     dp_conv2d_6 = tf.keras.layers.Dropout(0.5, name='Dropout_4x4')(act_conv2d_6)
 
     # Downsampling: 256 feature maps
     conv2d_7 = tf.keras.layers.Conv2D(256, (4, 4), strides=(1, 1), padding='valid', name='conv_1x1')(dp_conv2d_6)
-    bn_conv2d_7 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_7)
-    act_conv2d_7 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_1x1')(bn_conv2d_7)
+    #bn_conv2d_7 = tf.keras.layers.BatchNormalization(momentum=0.9)(conv2d_7)
+    act_conv2d_7 = tf.keras.layers.LeakyReLU(alpha=0.2, name='lReLU_1x1')(conv2d_7)
     dp_conv2d_7 = tf.keras.layers.Dropout(0.5, name='Dropout_1x1')(act_conv2d_7)
 
     flat_output = tf.keras.layers.Flatten()(dp_conv2d_7)
     final_output = tf.keras.layers.Dense(units=1, activation='linear', name='final_output')(flat_output)
-    bn_final_output = tf.keras.layers.BatchNormalization(momentum=0.9)(final_output)
+    #bn_final_output = tf.keras.layers.BatchNormalization(momentum=0.9)(final_output)
 
-    model = tf.keras.models.Model(inputs=[input_x, input_c], outputs=bn_final_output, name="Discriminator")
+    model = tf.keras.models.Model(inputs=[input_x, input_c], outputs=final_output, name="Discriminator")
     return model
+
 
 # define the combined generator and discriminator model, for updating the generator
 # Source: https://machinelearningmastery.com/how-to-develop-a-conditional-generative-adversarial-network-from-scratch/
