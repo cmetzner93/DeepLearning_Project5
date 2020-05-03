@@ -1,16 +1,15 @@
 import time
-import sys
 import cv2
 import glob
+import sys
 import numpy as np
-from pickle import dump, load
+from pickle import dump
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import SGD
-from keras.utils import plot_model
 from sklearn.model_selection import train_test_split
 
 
@@ -30,6 +29,7 @@ def load_datasets(class_paths):
     return datasets[0], datasets[1], datasets[2]
 
 
+# function that splits data in X and y
 def create_X_y(malignant_data, benign_data, normal_data):
     one_hot_encoding = [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
     X = malignant_data + benign_data + normal_data
@@ -37,7 +37,7 @@ def create_X_y(malignant_data, benign_data, normal_data):
         one_hot_encoding[2]]
     return X, y
 
-
+# function that creates train and test sets
 def preprocess_data(paths):
     print("Loading Dataset...")
 
@@ -56,7 +56,7 @@ def preprocess_data(paths):
     return X_train, X_test, y_train, y_test
 
 
-# light-weight version of VGG16 with 3 convolutional layers
+# 3-layer CNN
 def cnn_3(img_height, img_weight, channels, num_classes):
     model = Sequential()
 
@@ -78,13 +78,13 @@ def cnn_3(img_height, img_weight, channels, num_classes):
 
     # compile model
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
-    model.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
     print(model.summary())
 
     return model
 
 
-# light-weight version of VGG16 with 4 convolutional layers
+# 4-layer CNN
 def cnn_4(img_height, img_weight, channels, num_classes):
     model = Sequential()
 
@@ -109,7 +109,7 @@ def cnn_4(img_height, img_weight, channels, num_classes):
 
     # compile model
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
-    model.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
     print(model.summary())
 
     return model
@@ -163,7 +163,7 @@ def train_and_predict(model, X_train, y_train, X_test, y_test, epochs, batch_siz
     plt.title('Epochs vs. Accuracy')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
-    plt.legend(['Train', 'Validation'], loc='upper right')
+    plt.legend(['Train', 'Test'], loc='upper right')
     plt.savefig('../model_performance/plots/epoch_acc_%s.png' % (model_name))
 
     # epochs vs. loss
@@ -173,7 +173,7 @@ def train_and_predict(model, X_train, y_train, X_test, y_test, epochs, batch_siz
     plt.title('Epochs vs. Loss')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
-    plt.legend(['Train', 'Validation'], loc='upper right')
+    plt.legend(['Train', 'Test'], loc='upper right')
     plt.savefig('../model_performance/plots/epoch_loss_%s.png' % (model_name))
 
 
@@ -235,19 +235,3 @@ def main(argv=None):
 
 if __name__ == '__main__':
     main(sys.argv)
-
-
-'''
-history = load(open('../model_performance/history/cnn_3_128.pkl', "rb"))
-plt.figure()
-plt.ylim(0.4, 1)
-plt.plot(history['accuracy'])
-plt.plot(history['val_accuracy'])
-plt.title('Epochs vs. Accuracy')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.legend(['Train', 'Validation'], loc='upper right')
-plt.savefig('../model_performance/plots/test.png')
-'''
-
-
