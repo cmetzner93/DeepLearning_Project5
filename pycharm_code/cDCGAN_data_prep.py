@@ -54,7 +54,6 @@ def create_X_y(malignant_data, benign_data, normal_data):
 
 
 # Function which preprocesses the loaded dataset
-# Calls functions load_datasets and create_X_y
 # Calling train_test_split function from the package sklearn to split the data into train and test split
 def preprocess_data():
     print("Loading Dataset...")

@@ -72,7 +72,7 @@ def plot_acc(curr_dict, name):
     color = ['blue', 'orange', 'green']
     # Accuracies
     fig = plt.figure()
-    fig.suptitle('Loss vs Time', fontsize=20)
+    fig.suptitle('Accuracy vs Time', fontsize=20)
     plt.xlabel('Time progressed in [s]', fontsize=18)
     plt.ylabel('Accuracy', fontsize=16)
     plt.xlim(0, 5500)

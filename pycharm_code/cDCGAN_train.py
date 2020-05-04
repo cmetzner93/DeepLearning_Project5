@@ -15,19 +15,20 @@ argv[3] optimizer used in discriminator: Stochastic Gradient Descent ("sgd") and
 argv[4] prefix you want to name all output files (losses, models, etc.)
 """
 
+
 def main(argv=None):
     # Load Mammography (images) dataset including their respective labels (one-hot-encoded)
     # Images are represented as greyscale using RGB-values
     # Make sure directories are correct: Directory paths can be changed in script "cDCGAN_data_prep.py"
     X_train, X_test, y_train, y_test = preprocess_data()
-    print('Current test settings: Batch size {}, Labels: {}, Disc Optimizer {}, Name: {}'.format(settings[0], settings[1], settings[2], settings[3]))
     # Set Hyper-parameters for training the cDCGAN
     buffer_size = len(X_train) + 1  # Shuffle training data, adding 1 enables uniform shuffle
     print(len(X_train))             # (every random permutation is equally likely to occur)
     EPOCHS = argv[1]                # Number of epochs of training)
     batch_size = argv[2]            # Split training set (real images and respective labels) into batches
     disc_optimizer = argv[3]        # Optimizer for discriminator: 'adam' or 'sgd'
-    name = argv[4]                  # Give output files (models, diagnostic text file with losses / accuracy) a name
+    labels_state = argv[4]          # State of the labels: 'hard' or 'soft'
+    name = argv[5]                  # Give output files (models, diagnostic text file with losses / accuracy) a name
     dim_noise_z = 100               # Size of latent space (noise z) used to map fake mammography images
 
     # Create target Directory if don't exist
@@ -110,10 +111,10 @@ def main(argv=None):
             print("Real and Fake loss")
 
             # Model tuning: hard labels and soft labels --> soft labels provide more uncertainty to discriminator
-            if settings[1] == 'soft':
+            if labels_state == 'soft':
                 y_real = tf.random.uniform(shape=[batch_size], minval=0.7, maxval=1.2)
                 y_fake = tf.random.uniform(shape=[batch_size], minval=0, maxval=0.3)
-            elif settings[1] == 'hard':
+            elif labels_state == 'hard':
                 y_real = tf.ones([batch_size], dtype=tf.float32)
                 y_fake = tf.zeros([batch_size], dtype=tf.float32)
 
@@ -155,6 +156,7 @@ def main(argv=None):
     generator.save(name+'cDCGAN_generator', save_format='h5')
     discriminator.save(name+'cDCGAN_discriminator', save_format='h5')
     gan.save(name+'cDCGAN_gan', save_format='h5')
+
 
 if __name__ == '__main__':
     main(sys.argv)
