@@ -136,10 +136,9 @@ def train_and_predict(model, X_train, y_train, X_test, y_test, epochs, batch_siz
                         callbacks=[time_callback_train])
 
     # save model for later use
-    # model.save('../model_performance/models/model_%s.h5' % (datetime.now().strftime("%H:%M:%S")))
-    model.save('../model_performance/models/%s.h5' % (model_name))
+    model.save('%s.h5' % (model_name))
     # save model history
-    with open('../model_performance/history/%s.pkl' % (model_name), 'wb') as file:
+    with open('%s.pkl' % (model_name), 'wb') as file:
         dump(history.history, file)
 
     # store time stamps per epoch in variable
@@ -164,7 +163,7 @@ def train_and_predict(model, X_train, y_train, X_test, y_test, epochs, batch_siz
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend(['Train', 'Test'], loc='upper right')
-    plt.savefig('../model_performance/plots/epoch_acc_%s.png' % (model_name))
+    plt.savefig('epoch_acc_%s.png' % (model_name))
 
     # epochs vs. loss
     plt.figure()
@@ -174,16 +173,18 @@ def train_and_predict(model, X_train, y_train, X_test, y_test, epochs, batch_siz
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend(['Train', 'Test'], loc='upper right')
-    plt.savefig('../model_performance/plots/epoch_loss_%s.png' % (model_name))
+    plt.show()
+    plt.savefig('epoch_loss_%s.png' % (model_name))
 
 
 
 # Driver code main()
 def main(argv=None):
+    # build 3-layer cnn using 128 x 128 pixels image data
     if argv[1] == '128' and argv[2] == '3':
-        malignant_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/malignant_128/'
-        benign_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/benign_128/'
-        normal_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/normal_128/'
+        malignant_folder_path = 'data/malignant_128/'
+        benign_folder_path = 'data/benign_128/'
+        normal_folder_path = 'data/normal_128/'
         paths = [malignant_folder_path, benign_folder_path, normal_folder_path]
 
         # load data
@@ -193,10 +194,11 @@ def main(argv=None):
         model = cnn_3(img_height=128, img_weight=128, channels=3, num_classes=3)
         train_and_predict(model, X_train, y_train, X_test, y_test, epochs=200, batch_size=32, model_name='cnn_3_128')
 
+    # build 4-layer cnn using 128 x 128 pixels image data
     elif argv[1] == '128' and argv[2] == '4':
-        malignant_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/malignant_128/'
-        benign_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/benign_128/'
-        normal_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/normal_128/'
+        malignant_folder_path = 'data/malignant_128/'
+        benign_folder_path = 'data/benign_128/'
+        normal_folder_path = 'data/normal_128/'
         paths = [malignant_folder_path, benign_folder_path, normal_folder_path]
 
         # load data
@@ -206,10 +208,11 @@ def main(argv=None):
         model = cnn_4(img_height=128, img_weight=128, channels=3, num_classes=3)
         train_and_predict(model, X_train, y_train, X_test, y_test, epochs=200, batch_size=32, model_name='cnn_4_128')
 
+    # build 3-layer cnn using 256 x 256 pixels image data
     elif argv[1] == '256' and argv[2] == '3':
-        malignant_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/malignant_256/'
-        benign_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/benign_256/'
-        normal_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/normal_256/'
+        malignant_folder_path = 'data/malignant_256/'
+        benign_folder_path = 'data/benign_256/'
+        normal_folder_path = 'data/normal_256/'
         paths = [malignant_folder_path, benign_folder_path, normal_folder_path]
 
         # load data
@@ -219,10 +222,11 @@ def main(argv=None):
         model = cnn_3(img_height=256, img_weight=256, channels=3, num_classes=3)
         train_and_predict(model, X_train, y_train, X_test, y_test, epochs=200, batch_size=32, model_name='cnn_3_256')
 
+    # build 4-layer cnn using 256 x 256 pixels image data
     elif argv[1] == '256' and argv[2] == '4':
-        malignant_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/malignant_256/'
-        benign_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/benign_256/'
-        normal_folder_path = '/Users/annanau/Documents/UTK/DL_COS525/final_project/data/normal_256/'
+        malignant_folder_path = 'data/malignant_256/'
+        benign_folder_path = 'data/benign_256/'
+        normal_folder_path = 'data/normal_256/'
         paths = [malignant_folder_path, benign_folder_path, normal_folder_path]
 
         # load data
